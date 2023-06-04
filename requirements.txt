@@ -5,4 +5,4 @@ seaborn
 matplotlib
 streamlit_folium
 folium
-geopanda
+geopandas
