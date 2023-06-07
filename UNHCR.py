@@ -90,18 +90,28 @@ with dualLeftCol:
     else:
         if asylum[0] != 'All':
             #st.subheader('Plot of refugees from ' + origin + ' for asylum in ' + asylum)
-            dfOriginSelect = dfUNHCR.query('`Country of asylum` == @asylum & `Country of origin` == @origin').groupby(['Year']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
+            dfOriginSelect = dfUNHCR.query('`Country of asylum` == @asylum & `Country of origin` == @origin').groupby(['Year', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
+            fig, ax = plt.subplots(figsize=(16, 9))
+            sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", legend = np.size(origin) > 1, hue = 'Country of origin', data=dfOriginSelect, color="b")
+            sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", legend = False, hue = 'Country of origin', data=dfOriginSelect, color="b")
+            ax.set(ylabel="Refugees",
+                   xlabel="Year")
+            ax.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+            ax.set_ylim(0, None)
+            st.pyplot(fig)
         else:
             #st.subheader('Refugees from ' + origin)
-            dfOriginSelect = dfUNHCR.query('`Country of origin` == @origin').groupby(['Year']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
-        fig, ax = plt.subplots(figsize=(16, 9))
-        sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfOriginSelect, color="b")
-        sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfOriginSelect, color="b")
-        ax.set(ylabel="Refugees",
-               xlabel="Year")
-        ax.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-        ax.set_ylim(0, None)
-        st.pyplot(fig)
+            dfOriginSelect = dfUNHCR.query('`Country of origin` == @origin').groupby(['Year', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
+            fig, ax = plt.subplots(figsize=(16, 9))
+            sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", hue='Country of origin', data=dfOriginSelect,
+                         legend = np.size(origin) > 1, color="b")
+            sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", legend=False, hue='Country of origin',
+                            data=dfOriginSelect, color="b")
+            ax.set(ylabel="Refugees",
+                   xlabel="Year")
+            ax.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+            ax.set_ylim(0, None)
+            st.pyplot(fig)
 
 with dualRightCol:
     if np.size(asylum) == 0 or np.size(origin) == 0:
@@ -151,18 +161,20 @@ with dualRightCol:
         st_folium(mR, key='mR',
                 height=420,  width = 735, returned_objects=[])
     else:
-        if origin[0] != 'All':
+        if origin[0] != 'All' and (np.size(origin) == 1 and np.size(asylum) == 1):
             #st.subheader('Table of refugees in ' + asylum + ' originating from ' + origin)
             dfAsylumSelect = dfUNHCR.query('`Country of origin` == @origin & `Country of asylum` == @asylum').groupby(
                 ['Year']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
             st.dataframe(dfAsylumSelect, hide_index=True)
         else:
             #st.subheader('Refugees in ' + asylum)
-            dfAsylumSelect = dfUNHCR.query('`Country of asylum` == @asylum').groupby(['Year']).agg(
+            dfAsylumSelect = dfUNHCR.query('`Country of asylum` == @asylum').groupby(['Year', 'Country of asylum']).agg(
                 {'Refugees under UNHCR\'s mandate': sum}).reset_index()
             fig, ax = plt.subplots(figsize=(16, 9))
-            sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect, color="b")
-            sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect, color="b")
+            sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
+                         hue = 'Country of asylum', legend = np.size(asylum) > 1, color="b")
+            sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
+                            hue = 'Country of asylum', color="b", legend = False)
             ax.set(ylabel="Refugees",
                    xlabel="Year")
             ax.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
