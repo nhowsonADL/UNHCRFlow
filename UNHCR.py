@@ -43,11 +43,10 @@ with dualLeftCol:
     if np.size(asylum) == 0 or np.size(origin) == 0:
         st.subheader('Select both asylum and origin country/countries.')
     elif origin[0] == 'All':
+        st.subheader('Origin countries for selected population')
         if asylum[0] != 'All':
-            #st.subheader('Origin countries for asylum in ' + asylum)
             dfChoroOrigin = dfUNHCR.query('`Country of asylum` == @asylum & Year == @yearSel').groupby(['Country of origin (ISO)', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
         else:
-            #st.subheader('Origin countries')
             dfChoroOrigin = dfUNHCR.query('Year == @yearSel').groupby(['Country of origin (ISO)', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
         mL = folium.Map(location = [15,0], zoom_start=1)
         cL = folium.Choropleth(
@@ -89,7 +88,8 @@ with dualLeftCol:
                 height=420, width = 735, returned_objects=[])
     else:
         if asylum[0] != 'All':
-            #st.subheader('Plot of refugees from ' + origin + ' for asylum in ' + asylum)
+            st.subheader('Origin countries for selected population over time')
+            st.subheader('Refugees from selected origin countries to selected asylum countries')
             dfOriginSelect = dfUNHCR.query('`Country of asylum` == @asylum & `Country of origin` == @origin').groupby(['Year', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
             fig, ax = plt.subplots(figsize=(16, 9))
             sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", legend = np.size(origin) > 1, hue = 'Country of origin', data=dfOriginSelect, color="b")
@@ -100,7 +100,7 @@ with dualLeftCol:
             ax.set_ylim(0, None)
             st.pyplot(fig)
         else:
-            #st.subheader('Refugees from ' + origin)
+            st.subheader('Origin countries for selected population over time')
             dfOriginSelect = dfUNHCR.query('`Country of origin` == @origin').groupby(['Year', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
             fig, ax = plt.subplots(figsize=(16, 9))
             sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", hue='Country of origin', data=dfOriginSelect,
@@ -118,10 +118,10 @@ with dualRightCol:
         st.subheader('Select both asylum and origin country/countries.')
     elif asylum[0] == 'All':
         if origin[0] != 'All':
-            #st.subheader('Asylum countries for origin from ' + origin)
+            st.subheader('Asylum countries for selected population')
             dfChoroAsylum = dfUNHCR.query('`Country of origin` == @origin & Year == @yearSel').groupby(['Country of asylum (ISO)', 'Country of asylum']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
         else:
-            #st.subheader('Asylum countries')
+            st.subheader('Asylum countries for selected population')
             dfChoroAsylum = dfUNHCR.query('Year == @yearSel').groupby(['Country of asylum (ISO)', 'Country of asylum']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
         mR = folium.Map(location=[15, 0], zoom_start=1)
         cR = folium.Choropleth(
@@ -161,22 +161,36 @@ with dualRightCol:
         st_folium(mR, key='mR',
                 height=420,  width = 735, returned_objects=[])
     else:
-        if origin[0] != 'All' and (np.size(origin) == 1 and np.size(asylum) == 1):
-            #st.subheader('Table of refugees in ' + asylum + ' originating from ' + origin)
+        if origin[0] != 'All':
             dfAsylumSelect = dfUNHCR.query('`Country of origin` == @origin & `Country of asylum` == @asylum').groupby(
-                ['Year']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
-            st.dataframe(dfAsylumSelect, hide_index=True)
+                ['Year', 'Country of asylum']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
+            if np.size(origin) == 1 and np.size(asylum) == 1:
+                st.subheader('Table of population with asylum in' + asylum[0] + ' originating from ' + origin[0])
+                st.dataframe(dfAsylumSelect[['Year', 'Refugees under UNHCR\'s mandate']], hide_index=True)
+            else:
+                st.subheader('Asylum countries for selected population over time')
+                plt.clf()
+                fig2, ax2 = plt.subplots(figsize=(16, 9))
+                sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
+                         hue='Country of asylum', legend=np.size(asylum) > 1, color="b")
+                sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
+                            hue='Country of asylum', color="b", legend=False)
+                ax2.set(ylabel="Refugees",
+                   xlabel="Year")
+                ax2.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+                ax2.set_ylim(0, None)
+                st.pyplot(fig2)
         else:
-            #st.subheader('Refugees in ' + asylum)
+            st.subheader('Asylum countries for selected population over time')
             dfAsylumSelect = dfUNHCR.query('`Country of asylum` == @asylum').groupby(['Year', 'Country of asylum']).agg(
                 {'Refugees under UNHCR\'s mandate': sum}).reset_index()
-            fig, ax = plt.subplots(figsize=(16, 9))
+            fig2, ax2 = plt.subplots(figsize=(16, 9))
             sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
                          hue = 'Country of asylum', legend = np.size(asylum) > 1, color="b")
             sns.scatterplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfAsylumSelect,
                             hue = 'Country of asylum', color="b", legend = False)
-            ax.set(ylabel="Refugees",
+            ax2.set(ylabel="Refugees",
                    xlabel="Year")
-            ax.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-            ax.set_ylim(0, None)
-            st.pyplot(fig)
+            ax2.get_yaxis().set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+            ax2.set_ylim(0, None)
+            st.pyplot(fig2)
