@@ -22,7 +22,7 @@ dfUNHCR['Refugees under UNHCR\'s mandate'] = dfUNHCR['Refugees under UNHCR\'s ma
 origins = np.insert(np.sort(dfUNHCR['Country of origin'].unique().tolist()), 0, 'All')
 asylums = np.insert(np.sort(dfUNHCR['Country of asylum'].unique().tolist()), 0, 'All')
 countriesJSON = gpd.read_file("lowResCountriesAdjusted.json")[['geometry','iso_a3_eh', 'pop_est']]
-chorBins = [0, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000]
+chorBins = [0, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000] # Log10 Scale
 
 st.title('Refugee Flow Visualisation')
 
