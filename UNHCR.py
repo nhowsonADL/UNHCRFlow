@@ -29,23 +29,25 @@ st.title('Refugee Flow Visualisation')
 leftCol, midCol, rightCol = st.columns(3)
 
 with leftCol:
-    origin = st.selectbox(label = 'Country of origin', options = origins)
+    origin = st.multiselect(label = 'Country of origin', options = origins)
 
 with midCol:
     yearSel = st.slider('Year',2010, 2021, 2021)
 
 with rightCol:
-    asylum = st.selectbox(label = 'Country of asylum', options = asylums)
+    asylum = st.multiselect(label = 'Country of asylum', options = asylums)
 
 dualLeftCol, dualRightCol = st.columns(2)
 
 with dualLeftCol:
-    if origin == 'All':
-        if asylum != 'All':
-            st.subheader('Origin countries for asylum in ' + asylum)
+    if np.size(asylum) == 0 or np.size(origin) == 0:
+        st.subheader('Select both asylum and origin country/countries.')
+    elif origin[0] == 'All':
+        if asylum[0] != 'All':
+            #st.subheader('Origin countries for asylum in ' + asylum)
             dfChoroOrigin = dfUNHCR.query('`Country of asylum` == @asylum & Year == @yearSel').groupby(['Country of origin (ISO)', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
         else:
-            st.subheader('Origin countries')
+            #st.subheader('Origin countries')
             dfChoroOrigin = dfUNHCR.query('Year == @yearSel').groupby(['Country of origin (ISO)', 'Country of origin']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
         mL = folium.Map(location = [15,0], zoom_start=1)
         cL = folium.Choropleth(
@@ -86,11 +88,11 @@ with dualLeftCol:
         st_folium(mL, key = 'mL',
                 height=420, width = 735, returned_objects=[])
     else:
-        if asylum != 'All':
-            st.subheader('Plot of refugees from ' + origin + ' for asylum in ' + asylum)
+        if asylum[0] != 'All':
+            #st.subheader('Plot of refugees from ' + origin + ' for asylum in ' + asylum)
             dfOriginSelect = dfUNHCR.query('`Country of asylum` == @asylum & `Country of origin` == @origin').groupby(['Year']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
         else:
-            st.subheader('Refugees from ' + origin)
+            #st.subheader('Refugees from ' + origin)
             dfOriginSelect = dfUNHCR.query('`Country of origin` == @origin').groupby(['Year']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
         fig, ax = plt.subplots(figsize=(16, 9))
         sns.lineplot(x="Year", y="Refugees under UNHCR\'s mandate", data=dfOriginSelect, color="b")
@@ -102,12 +104,14 @@ with dualLeftCol:
         st.pyplot(fig)
 
 with dualRightCol:
-    if asylum == 'All':
-        if origin != 'All':
-            st.subheader('Asylum countries for origin from ' + origin)
+    if np.size(asylum) == 0 or np.size(origin) == 0:
+        st.subheader('Select both asylum and origin country/countries.')
+    elif asylum[0] == 'All':
+        if origin[0] != 'All':
+            #st.subheader('Asylum countries for origin from ' + origin)
             dfChoroAsylum = dfUNHCR.query('`Country of origin` == @origin & Year == @yearSel').groupby(['Country of asylum (ISO)', 'Country of asylum']).agg({'Refugees under UNHCR\'s mandate':sum}).reset_index()
         else:
-            st.subheader('Asylum countries')
+            #st.subheader('Asylum countries')
             dfChoroAsylum = dfUNHCR.query('Year == @yearSel').groupby(['Country of asylum (ISO)', 'Country of asylum']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
         mR = folium.Map(location=[15, 0], zoom_start=1)
         cR = folium.Choropleth(
@@ -147,13 +151,13 @@ with dualRightCol:
         st_folium(mR, key='mR',
                 height=420,  width = 735, returned_objects=[])
     else:
-        if origin != 'All':
-            st.subheader('Table of refugees in ' + asylum + ' originating from ' + origin)
+        if origin[0] != 'All':
+            #st.subheader('Table of refugees in ' + asylum + ' originating from ' + origin)
             dfAsylumSelect = dfUNHCR.query('`Country of origin` == @origin & `Country of asylum` == @asylum').groupby(
                 ['Year']).agg({'Refugees under UNHCR\'s mandate': sum}).reset_index()
             st.dataframe(dfAsylumSelect, hide_index=True)
         else:
-            st.subheader('Refugees in ' + asylum)
+            #st.subheader('Refugees in ' + asylum)
             dfAsylumSelect = dfUNHCR.query('`Country of asylum` == @asylum').groupby(['Year']).agg(
                 {'Refugees under UNHCR\'s mandate': sum}).reset_index()
             fig, ax = plt.subplots(figsize=(16, 9))
